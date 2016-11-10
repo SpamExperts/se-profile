@@ -2,24 +2,23 @@
 
 from __future__ import absolute_import, division, print_function
 
-import argparse
-import collections
-import functools
-import glob
-import importlib
-import inspect
-import itertools
-import linecache
-import logging
 import os
 import sys
-import tarfile
+import glob
 import time
+import logging
+import inspect
+import tarfile
+import argparse
+import functools
+import importlib
+import itertools
+import linecache
 import traceback
+import collections
 
-import memory_profiler
 import psutil
-
+import memory_profiler
 
 logger = logging.getLogger("se-profiler")
 PY3 = int(sys.version[0]) > 2
@@ -68,7 +67,6 @@ def setup_script_logging(logger, filename=None, debug=False, info=False,
         stream_level = "CRITICAL"
     setup_logging(logger, filename, stream_level=stream_level,
                   watched=watched, logdir=logdir)
-
 
 
 class SkipMethod(Exception):
@@ -279,7 +277,6 @@ class IOCountCodeMap(IOReadCodeMap):
 
 
 class CustomLineProfiler(memory_profiler.LineProfiler):
-
     code_map_klass = memory_profiler.CodeMap
 
     def __init__(self, **kw):
@@ -346,7 +343,6 @@ class IOCountLineProfiler(CustomLineProfiler):
 
 
 class CustomProfiler(object):
-
     unit = ""
     name = "Value"
     profiler_klass = memory_profiler.LineProfiler
@@ -666,10 +662,10 @@ class CustomProfiler(object):
             results.sort(key=lambda x: x[0], reverse=True)
         for fmax, fmin, favg, filename in results:
             stream.write(template.format(
-                    template_mem.format(fmax),
-                    template_mem.format(fmin),
-                    template_mem.format(favg),
-                    filename
+                template_mem.format(fmax),
+                template_mem.format(fmin),
+                template_mem.format(favg),
+                filename
             ))
         stream.write(table_sep)
         if report:
@@ -683,26 +679,26 @@ class CustomProfiler(object):
         else:
             self.third = total / count
         stream.write(template.format(
-                template_mem.format(self.all_max),
-                template_mem.format(self.all_min),
-                template_mem.format(self.third),
-                "TOTAL"
+            template_mem.format(self.all_max),
+            template_mem.format(self.all_min),
+            template_mem.format(self.third),
+            "TOTAL"
         ))
         stream.write(table_sep)
 
         template2 = " {0:>12} - {1:>}\n"
         stream.write("\n")
         stream.write(template2.format(
-                template_mem.format(self.all_max),
-                "%s peak" % self.name
+            template_mem.format(self.all_max),
+            "%s peak" % self.name
         ))
         stream.write(template2.format(
-                template_mem.format(self.start_value),
-                "%s at import" % self.name
+            template_mem.format(self.start_value),
+            "%s at import" % self.name
         ))
         stream.write(template2.format(
-                template_mem.format(self.end_value),
-                "%s at end of run" % self.name
+            template_mem.format(self.end_value),
+            "%s at end of run" % self.name
         ))
         stream.write(template2.format(
             template_mem.format(self.end_value - self.start_value),
@@ -1030,6 +1026,7 @@ def get_default_options():
                         help="Pass these arguments to the module")
     options = parser.parse_args()
     return options
+
 
 def main():
     options = get_default_options()
