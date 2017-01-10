@@ -1,2 +1,2 @@
-memory_profiler==0.41
+memory-profiler==0.42
 psutil==5.0.1
