@@ -9,6 +9,8 @@ from setuptools import setup
 REQUIRES = [
     "memory_profiler>=0.41",
     "psutil>=5.0.0",
+    "objgraph==3.4.1",
+    "Pympler==0.7",
 ]
 
 setup(
@@ -21,4 +23,8 @@ setup(
         'se_profile',
     ],
     install_requires=REQUIRES,
+    classifiers=[
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7'
+    ],
 )
