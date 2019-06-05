@@ -581,13 +581,13 @@ class CustomProfiler(object):
             stream.write('=' * len(header) + '\n')
 
             all_lines = linecache.getlines(filename)
-            mem_old = None
+
             float_format = '{0}.{1}f'.format(precision + 4, precision)
             template_mem = '{0:' + float_format + '} %s' % self.unit
             for (lineno, mem) in lines:
-                if mem is not None:
-                    inc = (mem - mem_old) if mem_old else 0
-                    mem_old = mem
+                if mem:
+                    inc = mem[0]
+                    mem = mem[1]
                     mem = template_mem.format(mem)
                     inc = template_mem.format(inc)
                 else:
@@ -622,7 +622,7 @@ class CustomProfiler(object):
                 continue
             if os.path.isabs(filename):
                 filename = filename[len(os.getcwd()):].strip(os.path.sep)
-            for mem in lines:
+            for (lineno, mem) in lines:
                 if mem is None or mem[1] is None:
                     continue
                 report[filename].append(mem[1])
