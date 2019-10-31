@@ -78,11 +78,18 @@ class CustomCodeMap(memory_profiler.CodeMap):
     of the trace function.
     """
 
-    def trace(self, code, lineno):
+    def trace(self, code, lineno, prev_lineno):
         value = self.trace_func(-1, include_children=self.include_children)
         # if there is already a measurement for that line get the max
-        previous_value = self[code].get(lineno, 0)
-        self[code][lineno] = max(value, previous_value)
+        prev_value = self[code].get(lineno, None)
+        previous_memory = prev_value[1] if prev_value else 0
+        previous_inc = prev_value[0] if prev_value else 0
+
+        prev_line_value = self[code].get(prev_lineno,
+                                         None) if prev_lineno else None
+        prev_line_memory = prev_line_value[1] if prev_line_value else 0
+        self[code][lineno] = (max(previous_inc, value - prev_line_memory),
+                              max(value, previous_memory))
 
     def trace_func(self, pid, timestamps=False, include_children=False):
         raise NotImplementedError()
@@ -91,9 +98,18 @@ class CustomCodeMap(memory_profiler.CodeMap):
 class MemoryCodeMap(CustomCodeMap):
     """Just like the original from the memory_profiler library."""
 
-    def trace_func(self, pid, timestamps=False, include_children=False):
-        return memory_profiler._get_memory(pid, timestamps=timestamps,
-                                           include_children=include_children)
+    def trace_func(self,
+                   pid,
+                   timestamps=False,
+                   include_children=False,
+                   filename=None):
+        return memory_profiler._get_memory(
+            pid,
+            self.backend,
+            timestamps=timestamps,
+            include_children=include_children,
+            filename=filename,
+        )
 
 
 class MemoryUSSCodeMap(CustomCodeMap):
@@ -282,28 +298,8 @@ class CustomLineProfiler(memory_profiler.LineProfiler):
     def __init__(self, **kw):
         super(CustomLineProfiler, self).__init__(**kw)
         include_children = kw.get('include_children', False)
-        self.code_map = self.code_map_klass(include_children)
-
-    def trace_memory_usage(self, frame, event, arg):
-        """Callback for sys.settrace"""
-        if frame.f_code in self.code_map:
-            try:
-                if event == 'call':
-                    # "call" event just saves the lineno but not the memory
-                    self.prevlines.append(frame.f_lineno)
-                elif event == 'line':
-                    self.code_map.trace(frame.f_code, self.prevlines[-1])
-                    self.prevlines[-1] = frame.f_lineno
-                elif event == 'return':
-                    self.code_map.trace(frame.f_code, self.prevlines.pop())
-            except IndexError:
-                # Unclear what happens here :/
-                pass
-
-        if self._original_trace_function is not None:
-            (self._original_trace_function)(frame, event, arg)
-
-        return self.trace_memory_usage
+        backend = kw.get('backend', 'psutil')
+        self.code_map = self.code_map_klass(include_children, backend)
 
 
 class MemoryLineProfiler(CustomLineProfiler):
@@ -585,13 +581,13 @@ class CustomProfiler(object):
             stream.write('=' * len(header) + '\n')
 
             all_lines = linecache.getlines(filename)
-            mem_old = None
+
             float_format = '{0}.{1}f'.format(precision + 4, precision)
             template_mem = '{0:' + float_format + '} %s' % self.unit
             for (lineno, mem) in lines:
-                if mem is not None:
-                    inc = (mem - mem_old) if mem_old else 0
-                    mem_old = mem
+                if mem:
+                    inc = mem[0]
+                    mem = mem[1]
                     mem = template_mem.format(mem)
                     inc = template_mem.format(inc)
                 else:
@@ -626,7 +622,7 @@ class CustomProfiler(object):
                 continue
             if os.path.isabs(filename):
                 filename = filename[len(os.getcwd()):].strip(os.path.sep)
-            for mem in lines:
+            for (lineno, mem) in lines:
                 if mem is None or mem[1] is None:
                     continue
                 report[filename].append(mem[1])
