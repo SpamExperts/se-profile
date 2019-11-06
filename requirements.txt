@@ -1,4 +1,4 @@
-memory-profiler==0.55.0
+memory-profiler==0.56.0
 psutil==5.5.0
 objgraph==3.4.1
 Pympler==0.7
