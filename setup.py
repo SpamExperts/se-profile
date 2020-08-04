@@ -8,7 +8,7 @@ from setuptools import setup
 
 REQUIRES = [
     "memory_profiler==0.41",
-    "psutil==5.0.0",
+    "psutil==5.7.2",
     "objgraph==3.4.1",
     "Pympler==0.7",
 ]
